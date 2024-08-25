@@ -7,7 +7,7 @@ use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\PriceAlertController;
 
 Route::get('/', function () {
-    return view('Test');
+    return view('welcome');
 });
 
 Route::get('/recommendation', [PythonController::class, 'getRecommendation']);
