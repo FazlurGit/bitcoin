@@ -59,10 +59,74 @@
                 </div>
             </div>
 
-            <!-- Display forecast data -->
-            <div class="chart-container mb-8">
-                <canvas id="summaryChart"></canvas>
-            </div>
+            <!-- Display forecast data -->  
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const ctx = document.getElementById('forecastChart').getContext('2d');
+                    const forecastData = @json($forecast);
+        
+                    const labels = forecastData.map(item => item.date);
+                    const prices = forecastData.map(item => item.predicted_price);
+        
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Predicted Bitcoin Price',
+                                data: prices,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderWidth: 2,
+                                tension: 0.1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `Predicted Price: ${context.parsed.y.toFixed(2)}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Date'
+                                    },
+                                    ticks: {
+                                        maxRotation: 45,
+                                        minRotation: 30,
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Price (USD)'
+                                    },
+                                    beginAtZero: false,
+                                    ticks: {
+                                        callback: function(value) {
+                                            return `${value}`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    });
+                </script>
+                <div class="chart-container mb-8">
+                    <canvas id="forecastChart"></canvas>
+                </div>
 
             <ul class="list-disc pl-5">
                 @foreach($forecast as $item)
@@ -82,81 +146,5 @@
         </div>
     </div>
 
-    <script>
-        function createCandleChart(data) {
-            const ctx = document.getElementById('summaryChart').getContext('2d');
-
-            const formattedData = data.map(item => ({
-                t: new Date(item.date),
-                o: item.open,
-                h: item.high,
-                l: item.low,
-                c: item.close
-            }));
-
-            new Chart(ctx, {
-                type: 'candlestick',
-                data: {
-                    datasets: [{
-                        label: 'Bitcoin Price',
-                        data: formattedData,
-                        borderColor: '#ff6347',
-                        color: {
-                            up: '#00ff00',
-                            down: '#ff0000'
-                        }
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'day',
-                                tooltipFormat: 'll',
-                            },
-                            title: {
-                                display: true,
-                                text: 'Date'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Price'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            const days = document.getElementById('timePeriod').value;
-            const response = await fetch(`http://127.0.0.1:5000/bitcoin_forecast/${days}`);
-            const data = await response.json();
-            if (data && data.length) {
-                createCandleChart(data);
-            }
-        });
-
-        document.getElementById('filterForm').addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent the default form submission
-            const days = document.getElementById('timePeriod').value;
-            const response = await fetch(`http://127.0.0.1:5000/bitcoin_forecast/${days}`);
-            const data = await response.json();
-            if (data && data.length) {
-                // Update chart and statistics with new data
-                createCandleChart(data);
-                // Optionally, you can trigger a re-render of the statistics here if needed
-            } else {
-                alert('No data available for the selected date range.');
-            }
-        });
-    </script>
 </body>
 </html>
