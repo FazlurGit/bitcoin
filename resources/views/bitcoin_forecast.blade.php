@@ -20,6 +20,7 @@
     <div class="container mx-auto bg-white p-8 rounded-lg shadow-lg">
         <h1 class="text-4xl font-bold mb-8 text-center text-indigo-600">Bitcoin Price Forecast</h1>
 
+                <!-- Dropdown for time period -->
         <!-- Dropdown for time period -->
         <div class="mb-6 flex justify-center">
             <form id="filterForm" method="GET" action="{{ url('/forecast') }}">
@@ -34,6 +35,7 @@
                 <button type="submit" id="filterButton" class="ml-4 bg-blue-600 text-white py-2 px-4 rounded-lg shadow-md hover:bg-blue-700">Apply Filter</button>
             </form>
         </div>
+
 
         <!-- Display summary statistics -->
         @if(isset($forecast) && count($forecast) > 0)

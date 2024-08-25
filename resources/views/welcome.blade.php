@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial"></script>
     <title>Bitcoin Recommendation System</title>
     <style>
-        /* Custom CSS for the chart container */
         .chart-container {
             width: 100%;
-            height: 500px; /* Adjust height as needed */
+            height: 500px;
         }
-        /* Add margin to the button */
         .mt-4-custom {
-            margin-top: 1rem; /* Adjust the margin as needed */
+            margin-top: 1rem;
         }
     </style>
 </head>
@@ -22,12 +22,10 @@
     <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
         <h1 class="text-2xl font-bold mb-6 text-center">Bitcoin Recommendation System</h1>
 
-        <!-- Button to access Bitcoin Recommendations -->
         <a href="/recommendations" class="block mt-4-custom text-center w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
             Get Buy Recommendations Now
         </a>
 
-        <!-- Dropdown for time period -->
         <div class="mb-6">
             <label for="timePeriod" class="block text-lg font-medium mb-2">Select Time Period:</label>
             <select id="timePeriod" class="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500">
@@ -39,118 +37,92 @@
             </select>
         </div>
 
-        <!-- Container for the chart -->
         <div class="mt-6">
             <h2 class="font-bold text-lg">Bitcoin Price Plot:</h2>
-            <div class="chart-container mt-2 rounded-md shadow-md">
-                <canvas id="bitcoinPriceChart"></canvas>
-            </div>
+            <div id="chart" class="chart-container mt-2 rounded-md shadow-md"></div>
         </div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const chartContainer = document.getElementById('chart');
+                const chart = LightweightCharts.createChart(chartContainer, {
+                    width: chartContainer.offsetWidth,
+                    height: 500,
+                    layout: {
+                        backgroundColor: '#ffffff',
+                        textColor: 'rgba(33, 56, 77, 1)',
+                    },
+                    grid: {
+                        vertLines: {
+                            color: 'rgba(197, 203, 206, 0.5)',
+                        },
+                        horzLines: {
+                            color: 'rgba(197, 203, 206, 0.5)',
+                        },
+                    },
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Normal,
+                    },
+                    rightPriceScale: {
+                        borderColor: 'rgba(197, 203, 206, 1)',
+                    },
+                    timeScale: {
+                        borderColor: 'rgba(197, 203, 206, 1)',
+                    },
+                });
+        
+                const candleSeries = chart.addCandlestickSeries({
+                    upColor: '#26a69a',
+                    downColor: '#ef5350',
+                    borderVisible: false,
+                    wickUpColor: '#26a69a',
+                    wickDownColor: '#ef5350',
+                });
+        
+                async function fetchData(days) {
+                    const response = await fetch(`http://127.0.0.1:5000/bitcoin_price?days=${days}`);
+                    const data = await response.json();
+        
+                    return data.map(item => ({
+                        time: item.date,
+                        open: item.open,
+                        high: item.high,
+                        low: item.low,
+                        close: item.close
+                    }));
+                }
+        
+                async function updateChart(days) {
+                    const data = await fetchData(days);
+                    candleSeries.setData(data);
+                }
+        
+                updateChart(365);
+        
+                const timePeriodSelect = document.getElementById('timePeriod');
+                timePeriodSelect.addEventListener('change', function () {
+                    const days = timePeriodSelect.value;
+                    updateChart(days);
+                });
+        
+                window.addEventListener('resize', function() {
+                    chart.applyOptions({ width: chartContainer.offsetWidth });
+                });
+            });
+        </script>
 
-        <!-- Button to access Bitcoin Forecast -->
         <a href="/forecast" class="block mt-4 text-center w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
             Get Bitcoin Forecast
         </a>
 
-        <!-- Button to access Portfolio -->
-        <a href="/portfolio" class="block mt-4 text-center w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            View Portfolio
-        </a>
-
-        <!-- Button to access Price Alerts -->
-        <a href="/price-alerts" class="block mt-4 text-center w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-            Manage Price Alerts
-        </a>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const ctx = document.getElementById('bitcoinPriceChart').getContext('2d');
-            const timePeriodSelect = document.getElementById('timePeriod');
-            let chart;
 
-            async function fetchData(days) {
-                const response = await fetch(`http://127.0.0.1:5000/bitcoin_price?days=${days}`);
-                const data = await response.json();
+    
 
-                const labels = data.map(item => item.date);
-                const prices = data.map(item => item.close);
-
-                return { labels, prices };
-            }
-
-            async function updateChart(days) {
-                const { labels, prices } = await fetchData(days);
-
-                if (chart) {
-                    chart.destroy(); // Destroy the previous chart instance
-                }
-
-                chart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Bitcoin Price',
-                            data: prices,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderWidth: 2,
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false, // Make sure the chart fills the container
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `Price: $${context.raw.toFixed(2)}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Date'
-                                },
-                                ticks: {
-                                    maxRotation: 45,
-                                    minRotation: 30,
-                                }
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: 'Price (USD)'
-                                },
-                                beginAtZero: false,
-                                ticks: {
-                                    callback: function(value) {
-                                        return `$${value}`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Initial chart load
-            updateChart(365); // Default to 1 year
-
-            // Event listener for dropdown change
-            timePeriodSelect.addEventListener('change', function () {
-                const days = timePeriodSelect.value;
-                updateChart(days);
-            });
-        });
-    </script>
 </body>
 </html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.2.1/chartjs-plugin-zoom.min.js"></script>
+
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
