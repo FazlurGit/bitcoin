@@ -33,7 +33,7 @@
                 <option value="90">3 Months</option>
                 <option value="180">6 Months</option>
                 <option value="365" selected>1 Year</option>
-                <option value="all">All Time</option>
+                <option value="100000">All Time</option>
             </select>
         </div>
 
@@ -69,6 +69,9 @@
                     timeScale: {
                         borderColor: 'rgba(197, 203, 206, 1)',
                     },
+                    watermark: {
+                        visible: false,
+                    }
                 });
         
                 const candleSeries = chart.addCandlestickSeries({
